@@ -1,30 +1,18 @@
-import axios from "axios";
-import { getAccessToken } from "./utils/utils.ts";
+// import { getAccessToken } from "./utils/getAccessToken.ts";
+// import { getProfileInformation } from "./utils/getProfileInformation.ts";
+import { getActivityList } from "./utils/getActivityList.ts";
 
-const accessToken = await getAccessToken();
+// const { access_token: accessToken } = await getAccessToken();
+// const profileInformation = await getProfileInformation();
+const activityList = await getActivityList(
+  {
+    before: "2025-12-31",
+    after: "2025-01-01",
+  },
+  1,
+  3
+);
 
-console.log("Access Token:", accessToken);
-
-// const listActivities = async (accessToken: string) => {
-//   try {
-//     const response = await axios.get(
-//       "https://www.strava.com/api/v3/athlete/activities",
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-
-//         params: {
-//           per_page: 10,
-//           page: 1,
-//         },
-//       }
-//     );
-//     console.log("Activities:", response.data);
-//   } catch (error) {
-//     console.error("Error fetching activities:", error);
-//     throw new Error("Failed to fetch activities");
-//   }
-// };
-
-// await listActivities(accessToken);
+// console.log("accessToken", accessToken);
+// console.log("profileInformation", profileInformation);
+console.log("activityList", activityList);
