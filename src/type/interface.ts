@@ -87,29 +87,66 @@ export type SportType =
   | "Yoga";
 
 export interface Activity {
-  id: number;
-  external_id: string;
-  upload_id: number;
-  athlete: MetaAthlete;
+  resource_state: number;
+  athlete: {
+    id: number;
+    resource_state: number;
+  };
   name: string;
   distance: number;
   moving_time: number;
   elapsed_time: number;
   total_elevation_gain: number;
-  elev_high: number;
-  elev_low: number;
-  type: string;
-  sport_type: string;
+  type: SportType;
+  sport_type: SportType;
+  id: number;
   start_date: string;
   start_date_local: string;
   timezone: string;
-  start_latlng: [number, number];
-  end_latlng: [number, number];
+  utc_offset: number;
+  location_city: string | null;
+  location_state: string | null;
+  location_country: string | null;
   achievement_count: number;
   kudos_count: number;
   comment_count: number;
   athlete_count: number;
   photo_count: number;
+  map: {
+    id: string;
+    summary_polyline: string;
+    resource_state: number;
+  };
+  trainer: boolean;
+  commute: boolean;
+  manual: boolean;
+  private: boolean;
+  visibility: "everyone" | "followers" | "only_me";
+  flagged: boolean;
+  gear_id: string | null;
+  start_latlng: [number, number];
+  end_latlng: [number, number];
+  average_speed: number;
+  max_speed: number;
+  average_cadence: number | null;
+  average_watts: number | null;
+  max_watts: number | null;
+  weighted_average_watts: number | null;
+  device_watts: boolean;
+  kilojoules: number | null;
+  has_heartrate: boolean;
+  average_heartrate: number | null;
+  max_heartrate: number | null;
+  heartrate_opt_out: boolean;
+  display_hide_heartrate_option: boolean;
+  elev_high: number | null;
+  elev_low: number | null;
+  upload_id: number;
+  upload_id_str: string;
+  external_id: string | null;
+  from_accepted_tag: boolean;
+  pr_count: number;
   total_photo_count: number;
-  map:
+  has_kudoed: boolean;
+  suffer_score: number | null;
 }

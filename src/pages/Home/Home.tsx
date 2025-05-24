@@ -89,7 +89,7 @@ const Home = () => {
           },
         });
 
-        setActivities(response.data);
+        setActivities(response.data as Activity[]);
       } catch (err) {
         console.error("Failed to fetch activities:", err);
       }
@@ -101,20 +101,29 @@ const Home = () => {
   }, [isAuthenticated, stravaApiUrl]);
 
   return (
-    <div className="home">
-      <h1>Home Page</h1>
-      <h2>Last activities</h2>
-      {activities.length > 0 ? (
-        <ul>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold underline text-center mt-10 mb-5">
+        Home Page
+      </h1>
+      <h2 className="text-2xl font-semibold mb-4 text-center">
+        Last 30 activities
+      </h2>
+      {activities.length > 0 && (
+        <ul className="space-y-2 max-w-2xl mx-auto">
           {activities.map((activity) => (
-            <li key={activity.id}>
-              <p>{activity.name}</p>
-              <p>{new Date(activity.start_date).toLocaleDateString()}</p>
+            <li
+              className="p-4 border rounded shadow hover:bg-gray-100 transition-colors duration-200"
+              key={activity.id}
+            >
+              <p className="text-lg font-medium text-blue-600 hover:underline">
+                {activity.name}
+              </p>
+              <p className="text-gray-600">
+                {new Date(activity.start_date).toLocaleDateString()}
+              </p>
             </li>
           ))}
         </ul>
-      ) : (
-        <p>No activities found.</p>
       )}
     </div>
   );
