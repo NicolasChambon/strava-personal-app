@@ -1,18 +1,26 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { GetAccessTokenResponse } from "../../type/interface";
+import { Activity, GetAccessTokenResponse } from "../../type/interface";
 
 const Home = () => {
   const [searchParams] = useSearchParams();
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activities, setActivities] = useState<Activity[]>([]);
+
   const code = searchParams.get("code");
 
   const client_id = import.meta.env.VITE_STRAVA_CLIENT_ID as string;
   const client_secret = import.meta.env.VITE_STRAVA_CLIENT_SECRET as string;
   const stravaApiUrl = import.meta.env.VITE_STRAVA_API_URL as string;
 
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const currentTime = Math.round(Date.now() / 1000);
+  const expiresAt = localStorage.getItem("expires_at");
+
+  if (expiresAt && currentTime < parseInt(expiresAt) && !isAuthenticated) {
+    setIsAuthenticated(true);
+  }
 
   useEffect(() => {
     const fetchAccessToken = async () => {
@@ -20,9 +28,6 @@ const Home = () => {
         console.error("Authorization code is missing.");
         return;
       }
-
-      setIsLoading(true);
-      setError(null);
 
       try {
         const response = await axios.post<GetAccessTokenResponse>(
@@ -40,32 +45,77 @@ const Home = () => {
           }
         );
 
-        const { access_token, refresh_token } = response.data;
+        const {
+          token_type,
+          expires_at,
+          expires_in,
+          refresh_token,
+          access_token,
+          athlete,
+        } = response.data;
 
-        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("token_type", token_type);
+        localStorage.setItem("expires_at", expires_at.toString());
+        localStorage.setItem("expires_in", expires_in.toString());
         localStorage.setItem("refresh_token", refresh_token);
+        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("athlete", JSON.stringify(athlete));
       } catch (err) {
         console.error("Failed to fetch access token:", err);
-        setError("Strava authorization failed.");
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    void fetchAccessToken();
-  }, [code, client_id, client_secret, stravaApiUrl]);
+    if (isAuthenticated) {
+      return;
+    }
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+    console.warn("Token expired or not found, fetching new token...");
+    void fetchAccessToken();
+  }, [code, client_id, client_secret, stravaApiUrl, isAuthenticated]);
+
+  useEffect(() => {
+    const accessToken = localStorage.getItem("access_token");
+
+    if (!accessToken) {
+      console.error("Access token is not available.");
+      return;
+    }
+
+    const fetchActivities = async () => {
+      try {
+        const response = await axios.get(`${stravaApiUrl}/athlete/activities`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        setActivities(response.data);
+      } catch (err) {
+        console.error("Failed to fetch activities:", err);
+      }
+    };
+
+    if (isAuthenticated) {
+      void fetchActivities();
+    }
+  }, [isAuthenticated, stravaApiUrl]);
 
   return (
     <div className="home">
       <h1>Home Page</h1>
-      <Link to="/last-activities">Last Activities</Link>
+      <h2>Last activities</h2>
+      {activities.length > 0 ? (
+        <ul>
+          {activities.map((activity) => (
+            <li key={activity.id}>
+              <p>{activity.name}</p>
+              <p>{new Date(activity.start_date).toLocaleDateString()}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No activities found.</p>
+      )}
     </div>
   );
 };
