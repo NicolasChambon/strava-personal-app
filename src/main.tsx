@@ -1,13 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import "./index.scss";
+import { BrowserRouter } from "react-router-dom";
+import "./reset.scss";
 import App from "./App.tsx";
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
-      <App />
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
     </StrictMode>
   );
 } else {
