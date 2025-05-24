@@ -86,7 +86,7 @@ export type SportType =
   | "Workout"
   | "Yoga";
 
-export interface Activity {
+export interface SummaryActivity {
   resource_state: number;
   athlete: {
     id: number;

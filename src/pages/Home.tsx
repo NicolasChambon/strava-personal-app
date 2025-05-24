@@ -1,13 +1,14 @@
 import { useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Activity, GetAccessTokenResponse } from "../../type/interface";
+import { SummaryActivity, GetAccessTokenResponse } from "../type/interface";
+import ActivityCard from "../components/ActivityCard";
 
 const Home = () => {
   const [searchParams] = useSearchParams();
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activities, setActivities] = useState<SummaryActivity[]>([]);
 
   const code = searchParams.get("code");
 
@@ -89,7 +90,7 @@ const Home = () => {
           },
         });
 
-        setActivities(response.data as Activity[]);
+        setActivities(response.data as SummaryActivity[]);
       } catch (err) {
         console.error("Failed to fetch activities:", err);
       }
@@ -111,17 +112,7 @@ const Home = () => {
       {activities.length > 0 && (
         <ul className="space-y-2 max-w-2xl mx-auto">
           {activities.map((activity) => (
-            <li
-              className="p-4 border rounded shadow hover:bg-gray-100 transition-colors duration-200"
-              key={activity.id}
-            >
-              <p className="text-lg font-medium text-blue-600 hover:underline">
-                {activity.name}
-              </p>
-              <p className="text-gray-600">
-                {new Date(activity.start_date).toLocaleDateString()}
-              </p>
-            </li>
+            <ActivityCard key={activity.id} activity={activity} />
           ))}
         </ul>
       )}
