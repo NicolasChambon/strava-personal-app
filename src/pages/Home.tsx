@@ -1,120 +1,54 @@
-import { useSearchParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { SummaryActivity, GetAccessTokenResponse } from "../type/interface";
 import ActivityCard from "../components/ActivityCard";
+import { useStravaAuth } from "../hooks/useStravaAuth";
+import { useAuth } from "../contexts/useAuth";
+import { useActivities } from "../hooks/useActivities";
+import LoadingSpinner from "../components/LoadingSpinner";
+import ErrorMessage from "../components/ErrorMessage";
 
 const Home = () => {
-  const [searchParams] = useSearchParams();
+  const { isAuthenticated, authError } = useStravaAuth();
+  const { isLoading: authLoading } = useAuth();
+  const { activities, isLoading, error, refetch } = useActivities();
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activities, setActivities] = useState<SummaryActivity[]>([]);
-
-  const code = searchParams.get("code");
-
-  const client_id = import.meta.env.VITE_STRAVA_CLIENT_ID as string;
-  const client_secret = import.meta.env.VITE_STRAVA_CLIENT_SECRET as string;
-  const stravaApiUrl = import.meta.env.VITE_STRAVA_API_URL as string;
-
-  const currentTime = Math.round(Date.now() / 1000);
-  const expiresAt = localStorage.getItem("expires_at");
-
-  if (expiresAt && currentTime < parseInt(expiresAt) && !isAuthenticated) {
-    setIsAuthenticated(true);
+  if (authLoading) {
+    return <LoadingSpinner message="Loading..." />;
   }
 
-  useEffect(() => {
-    const fetchAccessToken = async () => {
-      if (!code) {
-        console.error("Authorization code is missing.");
-        return;
-      }
+  if (authError) {
+    return <ErrorMessage message={authError} />;
+  }
 
-      try {
-        const response = await axios.post<GetAccessTokenResponse>(
-          `${stravaApiUrl}/oauth/token`,
-          {
-            client_id,
-            client_secret,
-            code,
-            grant_type: "authorization_code",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const {
-          token_type,
-          expires_at,
-          expires_in,
-          refresh_token,
-          access_token,
-          athlete,
-        } = response.data;
-
-        localStorage.setItem("token_type", token_type);
-        localStorage.setItem("expires_at", expires_at.toString());
-        localStorage.setItem("expires_in", expires_in.toString());
-        localStorage.setItem("refresh_token", refresh_token);
-        localStorage.setItem("access_token", access_token);
-        localStorage.setItem("athlete", JSON.stringify(athlete));
-      } catch (err) {
-        console.error("Failed to fetch access token:", err);
-      }
-    };
-
-    if (isAuthenticated) {
-      return;
-    }
-
-    console.warn("Token expired or not found, fetching new token...");
-    void fetchAccessToken();
-  }, [code, client_id, client_secret, stravaApiUrl, isAuthenticated]);
-
-  useEffect(() => {
-    const accessToken = localStorage.getItem("access_token");
-
-    if (!accessToken) {
-      console.error("Access token is not available.");
-      return;
-    }
-
-    const fetchActivities = async () => {
-      try {
-        const response = await axios.get(`${stravaApiUrl}/athlete/activities`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        setActivities(response.data as SummaryActivity[]);
-      } catch (err) {
-        console.error("Failed to fetch activities:", err);
-      }
-    };
-
-    if (isAuthenticated) {
-      void fetchActivities();
-    }
-  }, [isAuthenticated, stravaApiUrl]);
+  if (!isAuthenticated) {
+    return <LoadingSpinner message="Authenticating..." />;
+  }
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold underline text-center mt-10 mb-5">
-        Home Page
+      <h1 className="text-3xl font-bold text-center mt-10 mb-5">
+        Your Strava Activities
       </h1>
-      <h2 className="text-2xl font-semibold mb-4 text-center">
+      <h2 className="text-2xl font-semibold mb-4 text-center text-gray-600">
         Last 30 activities
       </h2>
-      {activities.length > 0 && (
-        <ul className="space-y-2 max-w-2xl mx-auto">
-          {activities.map((activity) => (
-            <ActivityCard key={activity.id} activity={activity} />
-          ))}
-        </ul>
+
+      {isLoading && <LoadingSpinner message="Loading activities..." />}
+
+      {error && <ErrorMessage message={error} onRetry={refetch} />}
+
+      {!isLoading && !error && activities.length > 0 && (
+        <div className="max-w-4xl mx-auto">
+          <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {activities.map((activity) => (
+              <ActivityCard key={activity.id} activity={activity} />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!isLoading && !error && activities.length === 0 && (
+        <p className="text-center text-gray-600 mt-8">
+          No activities found. Start recoding your workouts on Strava!
+        </p>
       )}
     </div>
   );
