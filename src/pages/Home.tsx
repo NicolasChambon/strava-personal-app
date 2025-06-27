@@ -1,6 +1,6 @@
 import ActivityCard from "../components/ActivityCard";
 import { useStravaAuth } from "../hooks/useStravaAuth";
-import { useAuth } from "../contexts/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { useActivities } from "../hooks/useActivities";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorMessage from "../components/ErrorMessage";
@@ -9,6 +9,10 @@ const Home = () => {
   const { isAuthenticated, authError } = useStravaAuth();
   const { isLoading: authLoading } = useAuth();
   const { activities, isLoading, error, refetch } = useActivities();
+
+  const handleRetry = () => {
+    void refetch();
+  };
 
   if (authLoading) {
     return <LoadingSpinner message="Loading..." />;
@@ -33,7 +37,16 @@ const Home = () => {
 
       {isLoading && <LoadingSpinner message="Loading activities..." />}
 
-      {error && <ErrorMessage message={error} onRetry={refetch} />}
+      {error && <ErrorMessage message={error} onRetry={handleRetry} />}
+
+      {!isLoading && !error && activities.length > 0 && (
+        <div className="text-center mb-6">
+          <p className="text-gray-600">
+            Found {activities.length} activities. Click on an activity to view
+            details.
+          </p>
+        </div>
+      )}
 
       {!isLoading && !error && activities.length > 0 && (
         <div className="max-w-4xl mx-auto">

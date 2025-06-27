@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../contexts/useAuth";
 import { SummaryActivity } from "../type/interface";
 import { stravaService } from "../services/stravaService";
+import { useAuth } from "./useAuth";
 
 interface UseActivitiesReturn {
   activities: SummaryActivity[];

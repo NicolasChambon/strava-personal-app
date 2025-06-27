@@ -1,13 +1,21 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useAuth } from "../contexts/useAuth";
-import { useEffect, useState } from "react";
+import { useAuth } from "./useAuth";
+import { useEffect, useRef, useState } from "react";
 import { stravaService } from "../services/stravaService";
 
+/**
+ * Custom hook to handle Strava authentication.
+ * It checks for the authorization code in the URL, exchanges it for tokens,
+ * and updates the authentication state.
+ *
+ * @returns {Object} - Contains isAuthenticated status and any authentication error.
+ */
 export const useStravaAuth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { setTokens, isTokenValid, isAuthenticated } = useAuth();
   const [authError, setAuthError] = useState<string | null>(null);
+  const isProcessingRef = useRef(false);
 
   useEffect(() => {
     const code = searchParams.get("code");
@@ -20,8 +28,13 @@ export const useStravaAuth = () => {
       return;
     }
 
+    if (isProcessingRef.current) {
+      return;
+    }
+
     const exchangeCodeForToken = async () => {
       try {
+        isProcessingRef.current = true;
         setAuthError(null);
         const tokenData = await stravaService.getAccessToken(code);
 
@@ -37,6 +50,8 @@ export const useStravaAuth = () => {
         console.error("Authentication failed:", error);
         setAuthError("Authentication failed. Please try again.");
         navigate("/", { replace: true });
+      } finally {
+        isProcessingRef.current = false;
       }
     };
 
